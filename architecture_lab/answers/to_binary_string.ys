@@ -1,0 +1,96 @@
+# FEYZA ÖZLÜ e2580868
+
+#/* $begin to_binary_string-ys */
+##################################################################
+# to_binary_string.ys - Convert an arr block of len integers to 
+# binary strings and store in buff
+# Return the sum of integers contained in arr.
+
+# Include your name and ID here.
+# Describe how and why you modified the baseline code.
+# First of all, inner loop will be iterated exactly 8 times starting from pow=128 until pow=1. 
+# Pow values are shifted right in each iteration. 
+# This means pow values are like 128, 64, 32, 16, 8, 4, 2, 1. 
+# Instead of shifthing in each iteration I will keep these values into an array, which has much less cost than shifting every time.
+# I created array at the bottom.
+# When I do this, CPE changed from 384.76 to 139.78
+# Also I put contants 1 and 8 into %r11 and %r12 registers at the beginning of the Loop. 
+# When I do this, CPE changed from 139.78 to 137.61
+
+##################################################################
+# Do not modify this portion
+# Function prologue.
+# %rdi = arr, %rsi = buff, %rdx = len
+to_binary_string:
+##################################################################
+
+# You can modify this portion
+# Loop header
+    xorq %rax,%rax    	     # sum = 0;
+    irmovq $1, %r11          # constant 1
+    irmovq $8, %r12          # constant 8
+    irmovq array, %r13       # load address of array into %r13
+
+Loop:  
+# I put these two lines inside of the Loop, because I am going to delete the same check condition in the updates part, since it is unnecesarry to check same thing 2 times.
+    andq %rdx,%rdx    	     # len <= 0?
+    jle Done                 # if so, goto Done:
+
+# This part is same with the original version
+    mrmovq (%rdi), %r9       # read val from arr...
+    addq %r12, %rdi          # arr++
+    addq %r9, %rax           # sum += val
+    rrmovq %rsi, %r10        # temp = buff
+
+# I used %rcx as loop counter and also load base address of array into %r14
+    irmovq $0, %rcx          # i = 0 for inner loop
+    rrmovq %r13, %r14        # load base address of array into %r14
+
+inner_loop:
+    cmpq %r12, %rcx    	     # if i >= 8 exit inner loop
+    jge updates
+
+    mrmovq (%r14), %r8       # load array[i] into %r8
+    cmpq %r9, %r8            # compare val and array[i]
+    jg otw                   # if array[i] > val, write '0'
+    subq %r8, %r9            # val -= array[i];
+    irmovq $49, %rbx
+    rmmovq %rbx, (%r10)      # *temp = '1'
+    jmp inner_updates
+
+otw:   
+    irmovq $48, %rbx
+    rmmovq %rbx, (%r10)      # *temp = '0'
+
+inner_updates:  
+    addq %r11, %r10         # temp++
+    addq %r11, %rcx         # i++
+    addq %r12, %r14         # increment array pointer (array[i+1])
+    jmp inner_loop
+
+updates:
+    subq %r11, %rdx    	     # len--
+    addq %r12, %rsi    	     # buff++
+    jmp Loop
+
+.align 8
+array:
+    .quad 128
+    .quad 64
+    .quad 32
+    .quad 16
+    .quad 8
+    .quad 4
+    .quad 2
+    .quad 1
+
+##################################################################
+# Do not modify the following section of code
+# Function epilogue.
+Done:
+    ret
+
+##################################################################
+# Keep the following label at the end of your function
+End:
+#/* $end to_binary_string-ys */

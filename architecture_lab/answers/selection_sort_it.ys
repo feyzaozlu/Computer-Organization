@@ -1,0 +1,113 @@
+# FEYZA ÖZLÜ e2580868 
+
+.pos 0x0
+    irmovq stack, %rsp
+    irmovq head, %rdi         
+    call selection_sort_it  
+    halt                  
+
+/* Absolutely positioned here to debug addresses more easily. */
+.pos 0x200
+head:
+    .quad 17
+    .quad node1
+node1:
+    .quad 24
+    .quad node2
+node2:
+    .quad 6
+    .quad node3 
+node3:
+    .quad 11
+    .quad node4
+node4:
+    .quad 4
+    .quad node5
+node5:
+    .quad 5
+    .quad node6
+node6:
+    .quad 3
+    .quad node7
+node7:
+    .quad 40
+    .quad node8
+node8:
+    .quad 19
+    .quad node9
+node9:
+    .quad 52
+    .quad node10
+node10:
+    .quad 8
+    .quad 0  /* Remember that 0 is null. */
+
+selection_sort_it:
+    pushq %r12
+    pushq %r13
+    pushq %r14
+    pushq %rbx
+
+    andq %rdi, %rdi             # if head == NULL
+    je done
+    mrmovq 8(%rdi), %rcx        # load head -> next
+    andq %rcx, %rcx             # if head -> next == NULL
+    je done
+    irmovq $0, %r8              # sorted = NULL
+
+outer_loop:
+    andq %rdi, %rdi             # if head == NULL
+    je done
+
+    rrmovq %rdi, %r9            # max = head
+    irmovq $0, %r10             # prevMax = NULL
+    rrmovq %rdi, %r11           # curr = head
+    irmovq $0, %r12             # prev = NULL
+
+inner_loop:
+    rrmovq %r11, %r13           # load curr
+    andq %r13, %r13             # if curr == NULL
+    je exit_inner_loop
+
+    mrmovq 0(%r11), %r14        # load curr -> data
+    mrmovq 0(%r9), %rbx         # load max -> data
+    subq %r14, %rbx             # if curr -> data > max -> data then jump
+    jge inner_updates
+
+    rrmovq %r11, %r9            # max = curr
+    rrmovq %r12, %r10           # prevMax = prev
+
+inner_updates:
+    rrmovq %r11, %r12           # prev = curr        
+    mrmovq 8(%r11), %r11        # curr = curr -> next
+    jmp inner_loop 
+
+exit_inner_loop:
+    rrmovq %r9, %rdx            # load max
+    subq %rdi, %rdx             # if max == head then jump
+    je if_part   
+
+    rrmovq %r10, %rdx           # load prevMax
+    mrmovq 8(%r9), %rbx         # load max -> next
+    rmmovq %rbx, 8(%rdx)        # prevMax -> next = max -> next
+    jmp end_of_if_else
+
+if_part:
+    mrmovq 8(%rdi), %rdi        # head = head -> next
+
+end_of_if_else:
+    rrmovq %r8, %rbx            # load sorted
+    rmmovq %rbx, 8(%r9)         # max -> next = sorted
+    rrmovq %r9, %r8             # sorted = max
+    jmp outer_loop
+
+done:
+    rrmovq %r8, %rax            # return sorted 
+    popq %r12
+    popq %r13
+    popq %r14
+    popq %rbx
+    ret
+
+.pos 0x800
+stack:

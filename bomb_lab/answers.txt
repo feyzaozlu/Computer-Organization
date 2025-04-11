@@ -1,0 +1,6 @@
+Your string is: The future will be better tomorrow.
+2 6 12 20 30 42
+7 450 35
+19 5778
+13 299
+2 1 5 4 3 6
